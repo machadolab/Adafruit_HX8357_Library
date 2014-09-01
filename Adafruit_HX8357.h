@@ -16,14 +16,33 @@
 #ifndef _ADAFRUIT_HX8357_H
 #define _ADAFRUIT_HX8357_H
 
+#ifdef ARDUINO
 #if ARDUINO >= 100
  #include "Arduino.h"
  #include "Print.h"
 #else
  #include "WProgram.h"
 #endif
-#include <Adafruit_GFX.h>
 #include <avr/pgmspace.h>
+#include "pins_arduino.h"
+#include "wiring_private.h"
+#define cbi(reg, bitmask) *reg &= ~bitmask
+#define sbi(reg, bitmask) *reg |= bitmask
+#endif
+
+#ifdef SPARK
+#include "application.h"
+#define digitalPinToBitMask(pin) (volatile uint32_t)pin
+#define portOutputRegister(port) NULL
+#define digitalPinToPort(pin) (volatile uint32_t)pin
+#define cbi(reg, bitmask) PIN_MAP[bitmask].gpio_peripheral->BRR = PIN_MAP[bitmask].gpio_pin
+#define sbi(reg, bitmask) PIN_MAP[bitmask].gpio_peripheral->BSRR = PIN_MAP[bitmask].gpio_pin
+#define SPARK_SPI_SPEED SPI_CLOCK_DIV4
+#endif
+
+#include <Adafruit_GFX.h>
+
+
 
 #define HX8357D 0xD
 #define HX8357B 0xB
@@ -154,7 +173,7 @@ class Adafruit_HX8357 : public Adafruit_GFX {
 
 
   boolean  hwSPI;
-#if defined (__AVR__)
+#if defined (SPARK) || defined (__AVR__)
   uint8_t mySPCR;
   volatile uint8_t *mosiport, *clkport, *dcport, *rsport, *csport;
   int8_t  _cs, _dc, _rst, _mosi, _miso, _sclk;

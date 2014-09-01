@@ -14,10 +14,8 @@
  ****************************************************/
 
 #include "Adafruit_HX8357.h"
-#include <avr/pgmspace.h>
 #include <limits.h>
-#include "pins_arduino.h"
-#include "wiring_private.h"
+
 #include <SPI.h>
 
 // Constructor when using software SPI.  All output pins are configurable.
@@ -48,7 +46,12 @@ void Adafruit_HX8357::spiwrite(uint8_t c) {
   //Serial.print("0x"); Serial.print(c, HEX); Serial.print(", ");
 
   if (hwSPI) {
-#if defined (__AVR__)
+#if defined (SPARK)
+	SPI.setClockDivider(SPARK_SPI_SPEED);
+	SPI.setBitOrder(MSBFIRST);
+	SPI.setDataMode(SPI_MODE0);
+	SPI.transfer(c);
+#elif defined (__AVR__)
     uint8_t backupSPCR = SPCR;
     SPCR = mySPCR;
     SPDR = c;
@@ -65,49 +68,61 @@ void Adafruit_HX8357::spiwrite(uint8_t c) {
     for(uint8_t bit = 0x80; bit; bit >>= 1) {
       if(c & bit) {
 	//digitalWrite(_mosi, HIGH); 
-	*mosiport |=  mosipinmask;
+    sbi(mosiport, mosipinmask);
+//	*mosiport |=  mosipinmask;
       } else {
-	//digitalWrite(_mosi, LOW); 
-	*mosiport &= ~mosipinmask;
+	//digitalWrite(_mosi, LOW);
+    cbi(mosiport, mosipinmask);
+//	*mosiport &= ~mosipinmask;
       }
       //digitalWrite(_sclk, HIGH);
-      *clkport |=  clkpinmask;
+      sbi(clkport, clkpinmask);
+//      *clkport |=  clkpinmask;
       //digitalWrite(_sclk, LOW);
-      *clkport &= ~clkpinmask;
+      cbi(clkport, clkpinmask);
+//      *clkport &= ~clkpinmask;
     }
   }
 }
 
 
 void Adafruit_HX8357::writecommand(uint8_t c) {
-  *dcport &=  ~dcpinmask;
+	cbi(dcport, dcpinmask);
+//  *dcport &=  ~dcpinmask;
   //digitalWrite(_dc, LOW);
-  *clkport &= ~clkpinmask;
+	cbi(clkport, clkpinmask);
+//  *clkport &= ~clkpinmask;
   //digitalWrite(_sclk, LOW);
-  *csport &= ~cspinmask;
+	cbi(csport, cspinmask);
+//  *csport &= ~cspinmask;
   //digitalWrite(_cs, LOW);
 
   spiwrite(c);
   //Serial.print("Command 0x"); Serial.println(c, HEX);
 
-  *csport |= cspinmask;
+    sbi(csport, cspinmask);
+//  *csport |= cspinmask;
   //digitalWrite(_cs, HIGH);
 }
 
 
 void Adafruit_HX8357::writedata(uint8_t c) {
-  *dcport |=  dcpinmask;
+	sbi(dcport, dcpinmask);
+//  *dcport |=  dcpinmask;
   //digitalWrite(_dc, HIGH);
-  *clkport &= ~clkpinmask;
+	cbi(clkport, clkpinmask);
+//  *clkport &= ~clkpinmask;
   //digitalWrite(_sclk, LOW);
-  *csport &= ~cspinmask;
+	cbi(csport, cspinmask);
+//  *csport &= ~cspinmask;
   //digitalWrite(_cs, LOW);
   
   spiwrite(c);
   //Serial.print("Data 0x"); Serial.println(c, HEX);
 
+    sbi(csport, cspinmask);
   //digitalWrite(_cs, HIGH);
-  *csport |= cspinmask;
+//  *csport |= cspinmask;
 } 
 
 
@@ -126,7 +141,12 @@ void Adafruit_HX8357::begin(uint8_t type) {
   dcpinmask = digitalPinToBitMask(_dc);
 
   if(hwSPI) { // Using hardware SPI
-#if defined (__AVR__)
+#if defined (SPARK)
+	SPI.begin();
+	SPI.setClockDivider(SPARK_SPI_SPEED);
+	SPI.setBitOrder(MSBFIRST);
+	SPI.setDataMode(SPI_MODE0);
+#elif defined (__AVR__)
     SPI.begin();
     SPI.setClockDivider(SPI_CLOCK_DIV2); // 8 MHz (full! speed!)
     SPI.setBitOrder(MSBFIRST);
@@ -146,8 +166,10 @@ void Adafruit_HX8357::begin(uint8_t type) {
     clkpinmask  = digitalPinToBitMask(_sclk);
     mosiport    = portOutputRegister(digitalPinToPort(_mosi));
     mosipinmask = digitalPinToBitMask(_mosi);
-    *clkport   &= ~clkpinmask;
-    *mosiport  &= ~mosipinmask;
+    cbi(clkport, clkpinmask);
+    cbi(mosiport, mosipinmask);
+//    *clkport   &= ~clkpinmask;
+//    *mosiport  &= ~mosipinmask;
   }
 
   // toggle RST low to reset
@@ -378,14 +400,17 @@ void Adafruit_HX8357::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
 
 void Adafruit_HX8357::pushColor(uint16_t color) {
   //digitalWrite(_dc, HIGH);
-  *dcport |=  dcpinmask;
+	sbi(dcport, dcpinmask);
+//  *dcport |=  dcpinmask;
   //digitalWrite(_cs, LOW);
-  *csport &= ~cspinmask;
+	cbi(csport, cspinmask);
+//  *csport &= ~cspinmask;
 
   spiwrite(color >> 8);
   spiwrite(color);
 
-  *csport |= cspinmask;
+  	sbi(csport, cspinmask);
+//  *csport |= cspinmask;
   //digitalWrite(_cs, HIGH);
 }
 
@@ -396,9 +421,11 @@ void Adafruit_HX8357::drawPixel(int16_t x, int16_t y, uint16_t color) {
   setAddrWindow(x,y,x+1,y+1);
 
   //digitalWrite(_dc, HIGH);
-  *dcport |=  dcpinmask;
+	sbi(dcport, dcpinmask);
+//  *dcport |=  dcpinmask;
   //digitalWrite(_cs, LOW);
-  *csport &= ~cspinmask;
+	cbi(csport, cspinmask);
+//  *csport &= ~cspinmask;
 
   /* 18 bit hack for testing */
   /*
@@ -415,7 +442,8 @@ void Adafruit_HX8357::drawPixel(int16_t x, int16_t y, uint16_t color) {
   spiwrite(color >> 8);
   spiwrite(color);
 
-  *csport |= cspinmask;
+    sbi(csport, cspinmask);
+//  *csport |= cspinmask;
   //digitalWrite(_cs, HIGH);
 }
 
@@ -433,16 +461,19 @@ void Adafruit_HX8357::drawFastVLine(int16_t x, int16_t y, int16_t h,
 
   uint8_t hi = color >> 8, lo = color;
 
-  *dcport |=  dcpinmask;
+	sbi(dcport, dcpinmask);
+//  *dcport |=  dcpinmask;
   //digitalWrite(_dc, HIGH);
-  *csport &= ~cspinmask;
+    cbi(csport, cspinmask);
+//  *csport &= ~cspinmask;
   //digitalWrite(_cs, LOW);
 
   while (h--) {
     spiwrite(hi);
     spiwrite(lo);
   }
-  *csport |= cspinmask;
+    sbi(csport, cspinmask);
+//  *csport |= cspinmask;
   //digitalWrite(_cs, HIGH);
 }
 
@@ -456,15 +487,19 @@ void Adafruit_HX8357::drawFastHLine(int16_t x, int16_t y, int16_t w,
   setAddrWindow(x, y, x+w-1, y);
 
   uint8_t hi = color >> 8, lo = color;
-  *dcport |=  dcpinmask;
-  *csport &= ~cspinmask;
+
+	sbi(dcport, dcpinmask);
+//  *dcport |=  dcpinmask;
+	cbi(csport, cspinmask);
+//  *csport &= ~cspinmask;
   //digitalWrite(_dc, HIGH);
   //digitalWrite(_cs, LOW);
   while (w--) {
     spiwrite(hi);
     spiwrite(lo);
   }
-  *csport |= cspinmask;
+    sbi(csport, cspinmask);
+//  *csport |= cspinmask;
   //digitalWrite(_cs, HIGH);
 }
 
@@ -493,9 +528,11 @@ void Adafruit_HX8357::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   b <<= 3;
   */
 
-  *dcport |=  dcpinmask;
+	sbi(dcport, dcpinmask);
+//  *dcport |=  dcpinmask;
   //digitalWrite(_dc, HIGH);
-  *csport &= ~cspinmask;
+	cbi(csport, cspinmask);
+//  *csport &= ~cspinmask;
   //digitalWrite(_cs, LOW);
 
   for(y=h; y>0; y--) {
@@ -505,7 +542,8 @@ void Adafruit_HX8357::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
     }
   }
   //digitalWrite(_cs, HIGH);
-  *csport |= cspinmask;
+    sbi(csport, cspinmask);
+//  *csport |= cspinmask;
 }
 
 
@@ -564,7 +602,12 @@ uint8_t Adafruit_HX8357::spiread(void) {
   uint8_t r = 0;
 
   if (hwSPI) {
-#if defined (__AVR__)
+#if defined (SPARK)
+	SPI.setClockDivider(SPARK_SPI_SPEED);
+	SPI.setBitOrder(MSBFIRST);
+	SPI.setDataMode(SPI_MODE0);
+	r = SPI.transfer(0x00);
+#elif defined (__AVR__)
     uint8_t backupSPCR = SPCR;
     SPCR = mySPCR;
     SPDR = 0x00;
