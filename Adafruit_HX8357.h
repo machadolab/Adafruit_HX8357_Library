@@ -35,12 +35,10 @@
 #define digitalPinToBitMask(pin) (volatile uint32_t)pin
 #define portOutputRegister(port) NULL
 #define digitalPinToPort(pin) (volatile uint32_t)pin
-#define cbi(reg, bitmask) PIN_MAP[bitmask].gpio_peripheral->BRR = PIN_MAP[bitmask].gpio_pin
-#define sbi(reg, bitmask) PIN_MAP[bitmask].gpio_peripheral->BSRR = PIN_MAP[bitmask].gpio_pin
 #define SPARK_SPI_SPEED SPI_CLOCK_DIV4
 #endif
 
-#include <Adafruit_GFX.h>
+#include "Adafruit_mfGFX.h"
 
 
 
@@ -127,7 +125,7 @@
 #define	HX8357_GREEN   0x07E0
 #define HX8357_CYAN    0x07FF
 #define HX8357_MAGENTA 0xF81F
-#define HX8357_YELLOW  0xFFE0  
+#define HX8357_YELLOW  0xFFE0
 #define HX8357_WHITE   0xFFFF
 
 
@@ -159,7 +157,7 @@ class Adafruit_HX8357 : public Adafruit_GFX {
   uint16_t readcommand16(uint8_t);
   uint32_t readcommand32(uint8_t);
   void     dummyclock(void);
-  */  
+  */
 
   void     spiwrite(uint8_t),
     writecommand(uint8_t c),

@@ -14,9 +14,20 @@
  ****************************************************/
 
 #include "Adafruit_HX8357.h"
-#include <limits.h>
 
-#include <SPI.h>
+#if defined(PLATFORM_ID)  //Only defined if a Particle device
+  #include "application.h"
+  STM32_Pin_Info* PIN_MAP = HAL_Pin_Map(); // Pointer required for highest access speed
+#if (PLATFORM_ID == 0)  // Core
+  #define cbi(ignore, _pin) (PIN_MAP[_pin].gpio_peripheral->BRR = PIN_MAP[_pin].gpio_pin)  //pinLO
+  #define sbi(ignore, _pin) (PIN_MAP[_pin].gpio_peripheral->BSRR = PIN_MAP[_pin].gpio_pin) //pinHI
+#elif (PLATFORM_ID == 6) // Photon
+  #define cbi(ignore, _pin) (PIN_MAP[_pin].gpio_peripheral->BSRRH = PIN_MAP[_pin].gpio_pin) //pinLO
+  #define sbi(ignore, _pin) (PIN_MAP[_pin].gpio_peripheral->BSRRL = PIN_MAP[_pin].gpio_pin) //pinHI
+#else
+  #error "*** PLATFORM_ID not supported by this library. PLATFORM should be Core or Photon ***"
+#endif
+#endif
 
 // Constructor when using software SPI.  All output pins are configurable.
 Adafruit_HX8357::Adafruit_HX8357(int8_t cs, int8_t dc, int8_t mosi,
@@ -67,7 +78,7 @@ void Adafruit_HX8357::spiwrite(uint8_t c) {
     // Fast SPI bitbang swiped from LPD8806 library
     for(uint8_t bit = 0x80; bit; bit >>= 1) {
       if(c & bit) {
-	//digitalWrite(_mosi, HIGH); 
+	//digitalWrite(_mosi, HIGH);
     sbi(mosiport, mosipinmask);
 //	*mosiport |=  mosipinmask;
       } else {
@@ -116,14 +127,14 @@ void Adafruit_HX8357::writedata(uint8_t c) {
 	cbi(csport, cspinmask);
 //  *csport &= ~cspinmask;
   //digitalWrite(_cs, LOW);
-  
+
   spiwrite(c);
   //Serial.print("Data 0x"); Serial.println(c, HEX);
 
     sbi(csport, cspinmask);
   //digitalWrite(_cs, HIGH);
 //  *csport |= cspinmask;
-} 
+}
 
 
 
@@ -182,25 +193,25 @@ void Adafruit_HX8357::begin(uint8_t type) {
     delay(150);
   }
 
-  
+
   if (type == HX8357B) {
-    Serial.println("linux HX8357B"); 
+    Serial.println("linux HX8357B");
     // seqpower
     writecommand(HX8357B_SETPOWER);
     writedata(0x44);
-    writedata(0x41); 
+    writedata(0x41);
     writedata(0x06);
     // seq_vcom
     writecommand(HX8357B_SETVCOM);
-    writedata(0x40); 
+    writedata(0x40);
     writedata(0x10);
     // seq_power_normal
     writecommand(HX8357B_SETPWRNORMAL);
-    writedata(0x05); 
+    writedata(0x05);
     writedata(0x12);
     // seq_panel_driving
     writecommand(HX8357B_SET_PANEL_DRIVING);
-    writedata(0x14); 
+    writedata(0x14);
     writedata(0x3b);
     writedata(0x00);
     writedata(0x02);
@@ -215,26 +226,26 @@ void Adafruit_HX8357::begin(uint8_t type) {
     writecommand(0xEA);
     writedata(0x03);
     writedata(0x00);
-    writedata(0x00); 
+    writedata(0x00);
     // undef2
     writecommand(0xEB);
     writedata(0x40);
     writedata(0x54);
-    writedata(0x26); 
+    writedata(0x26);
     writedata(0xdb);
     // seq_gamma
     writecommand(HX8357B_SETGAMMA); // 0xC8
     writedata(0x00);
     writedata(0x15);
-    writedata(0x00); 
+    writedata(0x00);
     writedata(0x22);
     writedata(0x00);
     writedata(0x08);
-    writedata(0x77); 
+    writedata(0x77);
     writedata(0x26);
     writedata(0x66);
     writedata(0x22);
-    writedata(0x04); 
+    writedata(0x04);
     writedata(0x00);
 
     // seq_addr mode
@@ -243,19 +254,19 @@ void Adafruit_HX8357::begin(uint8_t type) {
     // pixel format
     writecommand(HX8357_COLMOD);
     writedata(0x55);
-    
+
     // set up whole address box
     // paddr
     writecommand(HX8357_PASET);
     writedata(0x00);
     writedata(0x00);
-    writedata(0x01); 
+    writedata(0x01);
     writedata(0xDF);
     // caddr
     writecommand(HX8357_CASET);
     writedata(0x00);
     writedata(0x00);
-    writedata(0x01); 
+    writedata(0x01);
     writedata(0x3F);
 
     // display mode
@@ -278,7 +289,7 @@ void Adafruit_HX8357::begin(uint8_t type) {
     writedata(0x57);
     delay(300);
     // setRGB which also enables SDO
-    writecommand(HX8357_SETRGB); 
+    writecommand(HX8357_SETRGB);
     writedata(0x80);  //enable SDO pin!
 //    writedata(0x00);  //disable SDO pin!
     writedata(0x0);
@@ -287,13 +298,13 @@ void Adafruit_HX8357::begin(uint8_t type) {
 
     writecommand(HX8357D_SETCOM);
     writedata(0x25);  // -1.52V
-    
+
     writecommand(HX8357_SETOSC);
     writedata(0x68);  // Normal mode 70Hz, Idle mode 55 Hz
-    
+
     writecommand(HX8357_SETPANEL); //Set Panel
     writedata(0x05);  // BGR, Gate direction swapped
-    
+
     writecommand(HX8357_SETPWR1);
     writedata(0x00);  // Not deep standby
     writedata(0x15);  //BT
@@ -301,16 +312,16 @@ void Adafruit_HX8357::begin(uint8_t type) {
     writedata(0x1C);  //VSNR
     writedata(0x83);  //AP
     writedata(0xAA);  //FS
-    
-    writecommand(HX8357D_SETSTBA);  
+
+    writecommand(HX8357D_SETSTBA);
     writedata(0x50);  //OPON normal
     writedata(0x50);  //OPON idle
     writedata(0x01);  //STBA
     writedata(0x3C);  //STBA
     writedata(0x1E);  //STBA
     writedata(0x08);  //GEN
-    
-    writecommand(HX8357D_SETCYC);  
+
+    writecommand(HX8357D_SETCYC);
     writedata(0x02);  //NW 0x02
     writedata(0x40);  //RTN
     writedata(0x00);  //DIV
@@ -318,8 +329,8 @@ void Adafruit_HX8357::begin(uint8_t type) {
     writedata(0x2A);  //DUM
     writedata(0x0D);  //GDON
     writedata(0x78);  //GDOFF
-    
-    writecommand(HX8357D_SETGAMMA); 
+
+    writecommand(HX8357D_SETGAMMA);
     writedata(0x02);
     writedata(0x0A);
     writedata(0x11);
@@ -354,23 +365,23 @@ void Adafruit_HX8357::begin(uint8_t type) {
     writedata(0x03);
     writedata(0x00);
     writedata(0x01);
-    
+
     writecommand(HX8357_COLMOD);
     writedata(0x55);  // 16 bit
-    
-    writecommand(HX8357_MADCTL);  
-    writedata(0xC0); 
-    
+
+    writecommand(HX8357_MADCTL);
+    writedata(0xC0);
+
     writecommand(HX8357_TEON);  // TE off
-    writedata(0x00); 
-    
+    writedata(0x00);
+
     writecommand(HX8357_TEARLINE);  // tear line
-    writedata(0x00); 
+    writedata(0x00);
     writedata(0x02);
-    
+
     writecommand(HX8357_SLPOUT); //Exit Sleep
     delay(150);
-    
+
     writecommand(HX8357_DISPON);  // display on
     delay(50);
   } else {
@@ -384,7 +395,7 @@ void Adafruit_HX8357::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
 
   writecommand(HX8357_CASET); // Column addr set
   writedata(x0 >> 8);
-  writedata(x0 & 0xFF);     // XSTART 
+  writedata(x0 & 0xFF);     // XSTART
   writedata(x1 >> 8);
   writedata(x1 & 0xFF);     // XEND
 
@@ -454,7 +465,7 @@ void Adafruit_HX8357::drawFastVLine(int16_t x, int16_t y, int16_t h,
   // Rudimentary clipping
   if((x >= _width) || (y >= _height)) return;
 
-  if((y+h-1) >= _height) 
+  if((y+h-1) >= _height)
     h = _height-y;
 
   setAddrWindow(x, y, x, y+h-1);
@@ -631,7 +642,7 @@ uint8_t Adafruit_HX8357::spiread(void) {
     }
   }
   //Serial.print("read: 0x"); Serial.print(r, HEX);
-  
+
   return r;
 }
 
@@ -640,17 +651,17 @@ uint8_t Adafruit_HX8357::spiread(void) {
    digitalWrite(_cs, LOW);
    uint8_t r = spiread();
    digitalWrite(_cs, HIGH);
-   
+
    return r;
 }
- 
+
 
 uint8_t Adafruit_HX8357::readcommand8(uint8_t c, uint8_t index) {
    digitalWrite(_dc, LOW);
    digitalWrite(_sclk, LOW);
    digitalWrite(_cs, LOW);
    spiwrite(c);
- 
+
    digitalWrite(_dc, HIGH);
    uint8_t r = spiread();
    digitalWrite(_cs, HIGH);
@@ -658,14 +669,14 @@ uint8_t Adafruit_HX8357::readcommand8(uint8_t c, uint8_t index) {
 }
 
 
- 
+
 /*
 
  uint16_t Adafruit_HX8357::readcommand16(uint8_t c) {
  digitalWrite(_dc, LOW);
  if (_cs)
  digitalWrite(_cs, LOW);
- 
+
  spiwrite(c);
  pinMode(_sid, INPUT); // input!
  uint16_t r = spiread();
@@ -673,21 +684,21 @@ uint8_t Adafruit_HX8357::readcommand8(uint8_t c, uint8_t index) {
  r |= spiread();
  if (_cs)
  digitalWrite(_cs, HIGH);
- 
+
  pinMode(_sid, OUTPUT); // back to output
  return r;
  }
- 
+
  uint32_t Adafruit_HX8357::readcommand32(uint8_t c) {
  digitalWrite(_dc, LOW);
  if (_cs)
  digitalWrite(_cs, LOW);
  spiwrite(c);
  pinMode(_sid, INPUT); // input!
- 
+
  dummyclock();
  dummyclock();
- 
+
  uint32_t r = spiread();
  r <<= 8;
  r |= spiread();
@@ -697,9 +708,9 @@ uint8_t Adafruit_HX8357::readcommand8(uint8_t c, uint8_t index) {
  r |= spiread();
  if (_cs)
  digitalWrite(_cs, HIGH);
- 
+
  pinMode(_sid, OUTPUT); // back to output
  return r;
  }
- 
+
  */
