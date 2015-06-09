@@ -15,7 +15,7 @@
 
 #include "Adafruit_HX8357.h"
 
-#if defined(PLATFORM_ID)  //Only defined if a Particle device
+#ifdef SPARK  //Only defined if a Particle device
   #include "application.h"
   STM32_Pin_Info* PIN_MAP = HAL_Pin_Map(); // Pointer required for highest access speed
 #if (PLATFORM_ID == 0)  // Core

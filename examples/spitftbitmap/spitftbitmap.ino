@@ -16,7 +16,9 @@
 #include "Adafruit_mfGFX.h"
 #include "Adafruit_HX8357.h"
 
+#ifdef SPARK
 SYSTEM_MODE(AUTOMATIC);
+#endif
 
 // TFT display and SD card will share the hardware SPI interface.
 // Hardware SPI pins are specific to the Arduino board type and

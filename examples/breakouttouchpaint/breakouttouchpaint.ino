@@ -19,7 +19,9 @@
 #include "Adafruit_HX8357.h"
 #include "TouchScreen.h"
 
+#ifdef SPARK
 SYSTEM_MODE(AUTOMATIC);
+#endif
 
 // These are the four touchscreen analog pins
 #define YP A2  // must be an analog pin, use "An" notation!

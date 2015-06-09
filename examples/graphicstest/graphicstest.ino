@@ -16,7 +16,9 @@
 #include "Adafruit_mfGFX.h"
 #include "Adafruit_HX8357.h"
 
+#ifdef SPARK
 SYSTEM_MODE(AUTOMATIC);
+#endif
 
 // These are 'flexible' lines that can be changed
 #define TFT_CS 10
