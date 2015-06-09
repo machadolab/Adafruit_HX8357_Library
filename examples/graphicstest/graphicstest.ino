@@ -13,9 +13,12 @@
   MIT license, all text above must be included in any redistribution
  ****************************************************/
 
-#include <SPI.h>
-#include "Adafruit_GFX.h"
+#include "Adafruit_mfGFX.h"
 #include "Adafruit_HX8357.h"
+
+#ifdef SPARK
+SYSTEM_MODE(AUTOMATIC);
+#endif
 
 // These are 'flexible' lines that can be changed
 #define TFT_CS 10
@@ -27,7 +30,7 @@ Adafruit_HX8357 tft = Adafruit_HX8357(TFT_CS, TFT_DC, TFT_RST);
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("HX8357D Test!"); 
+  Serial.println("HX8357D Test!");
 
   tft.begin(HX8357D);
 
@@ -41,8 +44,8 @@ void setup() {
   x = tft.readcommand8(HX8357_RDDIM);
   Serial.print("Image Format: 0x"); Serial.println(x, HEX);
   x = tft.readcommand8(HX8357_RDDSDR);
-  Serial.print("Self Diagnostic: 0x"); Serial.println(x, HEX); 
-  
+  Serial.print("Self Diagnostic: 0x"); Serial.println(x, HEX);
+
   Serial.println(F("Benchmark                Time (microseconds)"));
 
   tft.setRotation(1);
@@ -128,7 +131,7 @@ unsigned long testText() {
   tft.println("in the gobberwarts");
   tft.println("with my blurglecruncheon,");
   tft.println("see if I don't!");
-  
+
   tft.setTextColor(HX8357_WHITE);
   tft.println(F("Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do: once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it, 'and what is the use of a book,' thought Alice 'without pictures or conversations?'"));
 
@@ -141,7 +144,7 @@ tft.println(F("In another moment down went Alice after it, never once considerin
 tft.println(F("The rabbit-hole went straight on like a tunnel for some way, and then dipped suddenly down, so suddenly that Alice had not a moment to think about stopping herself before she found herself falling down a very deep well."));
 
 tft.println(F("Either the well was very deep, or she fell very slowly, for she had plenty of time as she went down to look about her and to wonder what was going to happen next. First, she tried to look down and make out what she was coming to, but it was too dark to see anything; then she looked at the sides of the well, and noticed that they were filled with cupboards and book-shelves; here and there she saw maps and pictures hung upon pegs. She took down a jar from one of the shelves as she passed; it was labelled 'ORANGE MARMALADE', but to her great disappointment it was empty: she did not like to drop the jar for fear of killing somebody, so managed to put it into one of the cupboards as she fell past it."));
-  
+
   return micros() - start;
 }
 

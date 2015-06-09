@@ -13,11 +13,12 @@
   MIT license, all text above must be included in any redistribution
  ****************************************************/
 
-
-#include <Adafruit_GFX.h>    // Core graphics library
+#include "Adafruit_mfGFX.h"
 #include "Adafruit_HX8357.h"
-#include <SPI.h>
-#include <SD.h>
+
+#ifdef SPARK
+SYSTEM_MODE(AUTOMATIC);
+#endif
 
 // TFT display and SD card will share the hardware SPI interface.
 // Hardware SPI pins are specific to the Arduino board type and
@@ -36,7 +37,7 @@ void setup(void) {
 
   tft.begin(HX8357D);
   tft.fillScreen(HX8357_BLUE);
-  
+
   Serial.print("Initializing SD card...");
   if (!SD.begin(SD_CS)) {
     Serial.println("failed!");
